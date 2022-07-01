@@ -7,6 +7,10 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/favicon"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+
+	userControllerPkg "github.com/suryaadi44/linkify/internal/user/controller"
+	userRepositoryPkg "github.com/suryaadi44/linkify/internal/user/repository"
+	userServicePkg "github.com/suryaadi44/linkify/internal/user/service"
 )
 
 func InitializeController(app *fiber.App, db *mongo.Database) {
@@ -16,4 +20,10 @@ func InitializeController(app *fiber.App, db *mongo.Database) {
 		Format:     "${time} [API] ${ip}:${port} ${status} - ${latency} ${method} ${path}\n",
 		TimeFormat: "2006/01/02 15:04:05",
 	}))
+
+	userRepository := userRepositoryPkg.NewUserRepository(db)
+	userService := userServicePkg.NewUserService(*userRepository)
+	userController := userControllerPkg.NewUserController(app, *userService)
+
+	userController.InitializeController()
 }
