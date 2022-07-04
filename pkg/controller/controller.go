@@ -21,9 +21,10 @@ func InitializeController(app *fiber.App, db *mongo.Database) {
 		TimeFormat: "2006/01/02 15:04:05",
 	}))
 
+	api := app.Group("/api")
+
 	userRepository := userRepositoryPkg.NewUserRepository(db)
 	userService := userServicePkg.NewUserService(*userRepository)
-	userController := userControllerPkg.NewUserController(app, *userService)
-
+	userController := userControllerPkg.NewUserController(api, *userService)
 	userController.InitializeController()
 }

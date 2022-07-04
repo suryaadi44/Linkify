@@ -5,7 +5,8 @@ import (
 )
 
 type User struct {
-	Username string    `bson:"_id"`
+	UID      string    `bson:"_id"`
+	Username string    `bson:"username"`
 	Password string    `bson:"pass"`
 	Email    string    `bson:"email"`
 	Rank     int       `bson:"rank"`
