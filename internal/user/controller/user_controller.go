@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"os"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/suryaadi44/linkify/internal/user/dto"
 	"github.com/suryaadi44/linkify/internal/user/service"
@@ -22,10 +24,11 @@ func NewUserController(Router fiber.Router, userService service.UserService) *Us
 
 func (u *UserController) InitializeController() {
 	u.Router.Post("/user/register", u.RegisterUser)
+	u.Router.Post("/user/login", u.AuthenticateUser)
 }
 
 func (u *UserController) RegisterUser(c *fiber.Ctx) error {
-	var user dto.RegisterForm
+	var user dto.RegisterRequest
 	if err := c.BodyParser(&user); err != nil {
 		return c.Status(500).JSON(global.NewBaseResponse(500, err.Error()))
 	}
@@ -43,4 +46,28 @@ func (u *UserController) RegisterUser(c *fiber.Ctx) error {
 		return c.Status(500).JSON(global.NewBaseResponse(500, err.Error()))
 	}
 	return c.Status(201).JSON(global.NewBaseResponse(201, "User created successfully"))
+}
+
+func (u *UserController) AuthenticateUser(c *fiber.Ctx) error {
+	var user dto.LoginRequest
+	if err := c.BodyParser(&user); err != nil {
+		return c.Status(500).JSON(global.NewBaseResponse(500, err.Error()))
+	}
+
+	token, err := u.UserService.AuthenticateUser(c.Context(), user)
+	if err != nil {
+		return c.Status(500).JSON(global.NewBaseResponse(500, err.Error()))
+	}
+
+	if token == nil {
+		return c.Status(401).JSON(global.NewBaseResponse(401, "Invalid credentials"))
+	}
+
+	//Sign token
+	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	if err != nil {
+		return c.Status(500).JSON(global.NewBaseResponse(500, err.Error()))
+	}
+
+	return c.Status(200).JSON(global.NewBaseResponse(200, tokenString))
 }
