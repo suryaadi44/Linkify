@@ -26,3 +26,27 @@ func (u *UserRepository) CreateUser(ctx context.Context, user entity.User) error
 	}
 	return nil
 }
+
+func (u *UserRepository) IsEmailExists(ctx context.Context, email string) bool {
+	collection := u.db.Collection("users")
+
+	var user entity.User
+	err := collection.FindOne(ctx, map[string]interface{}{"email": email}).Decode(&user)
+	if err != nil {
+		return false
+	}
+
+	return true
+}
+
+func (u *UserRepository) IsUsernameExists(ctx context.Context, username string) bool {
+	collection := u.db.Collection("users")
+
+	var user entity.User
+	err := collection.FindOne(ctx, map[string]interface{}{"username": username}).Decode(&user)
+	if err != nil {
+		return false
+	}
+
+	return true
+}

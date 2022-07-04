@@ -8,6 +8,8 @@ require (
 	go.mongodb.org/mongo-driver v1.9.1
 )
 
+require github.com/google/uuid v1.3.0
+
 require (
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
