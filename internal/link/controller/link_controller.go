@@ -35,7 +35,9 @@ func (l *LinkController) InitializeController() {
 			return c.Status(fiber.StatusUnauthorized).JSON(global.NewBaseResponse(fiber.StatusUnauthorized, "Unauthorized"))
 		},
 	}))
-	l.Router.Patch("/link", l.AddLink)
+
+	l.Router.Put("/link", l.AddLink)
+	l.Router.Patch("/link", l.EditLinkByIndex)
 }
 
 func (l *LinkController) GetLink(c *fiber.Ctx) error {
@@ -56,9 +58,9 @@ func (l *LinkController) AddLink(c *fiber.Ctx) error {
 
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
-	uid := claims["username"].(string)
+	username := claims["username"].(string)
 
-	err := l.LinkService.AddLink(c.Context(), uid, link)
+	err := l.LinkService.AddLink(c.Context(), username, link)
 	if err != nil {
 		if err == service.ErrLinkExists {
 			return c.Status(fiber.StatusBadRequest).JSON(global.NewBaseResponse(fiber.StatusBadRequest, err.Error()))
@@ -68,4 +70,30 @@ func (l *LinkController) AddLink(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(global.NewBaseResponse(fiber.StatusCreated, "Link added successfully"))
+}
+
+func (l *LinkController) EditLinkByIndex(c *fiber.Ctx) error {
+	var link dto.Link
+	if err := c.BodyParser(&link); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(global.NewBaseResponse(fiber.StatusInternalServerError, err.Error()))
+	}
+
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	username := claims["username"].(string)
+
+	err := l.LinkService.EditLinkByIndex(c.Context(), username, link)
+	if err != nil {
+		if err == service.ErrLinkNotFound {
+			return c.Status(fiber.StatusNotFound).JSON(global.NewBaseResponse(fiber.StatusNotFound, err.Error()))
+		}
+
+		if err == service.ErrLinkExists {
+			return c.Status(fiber.StatusBadRequest).JSON(global.NewBaseResponse(fiber.StatusBadRequest, err.Error()))
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(global.NewBaseResponse(fiber.StatusInternalServerError, err.Error()))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(global.NewBaseResponse(fiber.StatusOK, "Link edited successfully"))
 }

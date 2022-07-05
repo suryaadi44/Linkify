@@ -2,7 +2,7 @@ package entity
 
 type Links struct {
 	Username    string `bson:"_id"`
-	Description string `bson:"description"`
+	Description string `bson:"description,omitempty"`
 	Links       []Link `bson:"links,omitempty"`
 }
 

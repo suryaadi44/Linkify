@@ -39,7 +39,7 @@ func InitializeController() *fiber.App {
 	}
 
 	return fiber.New(fiber.Config{
-		Prefork:      true,
+		Prefork:      os.Getenv("PREFORK") == "true",
 		ServerHeader: appName,
 	})
 }
