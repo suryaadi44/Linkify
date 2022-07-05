@@ -3,8 +3,10 @@ package service
 import (
 	"context"
 	"log"
+	"os"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/suryaadi44/linkify/internal/user/dto"
 	entity "github.com/suryaadi44/linkify/internal/user/entitiy"
@@ -22,7 +24,7 @@ func NewUserService(repository repository.UserRepository) *UserService {
 	}
 }
 
-func (u UserService) CreateUser(ctx context.Context, user dto.RegisterForm) error {
+func (u UserService) CreateUser(ctx context.Context, user dto.RegisterRequest) error {
 	hash, err := utils.HashPassword(user.Password)
 	if err != nil {
 		return err
@@ -52,4 +54,33 @@ func (u UserService) IsEmailExists(ctx context.Context, email string) bool {
 
 func (u UserService) IsUsernameExists(ctx context.Context, username string) bool {
 	return u.repository.IsUsernameExists(ctx, username)
+}
+
+func (u UserService) AuthenticateUser(ctx context.Context, user dto.LoginRequest) (*string, error) {
+	savedUser, err := u.repository.GetUserByEmail(ctx, user.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	if !utils.CheckPasswordHash(user.Password, savedUser.Password) {
+		return nil, nil
+	}
+
+	//Create jwt claims
+	claims := jwt.MapClaims{
+		"uid":        savedUser.UID,
+		"permission": savedUser.Rank,
+		"exp":        time.Now().Add(time.Hour * 2).Unix(),
+	}
+
+	//Create token
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	//Sign token
+	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	if err != nil {
+		return nil, err
+	}
+
+	return &tokenString, nil
 }

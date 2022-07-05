@@ -10,6 +10,8 @@ require (
 
 require github.com/google/uuid v1.3.0
 
+require github.com/golang-jwt/jwt/v4 v4.4.2
+
 require (
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
