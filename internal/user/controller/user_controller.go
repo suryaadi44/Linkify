@@ -28,38 +28,38 @@ func (u *UserController) InitializeController() {
 func (u *UserController) RegisterUser(c *fiber.Ctx) error {
 	var user dto.RegisterRequest
 	if err := c.BodyParser(&user); err != nil {
-		return c.Status(500).JSON(global.NewBaseResponse(500, err.Error()))
+		return c.Status(fiber.StatusInternalServerError).JSON(global.NewBaseResponse(fiber.StatusInternalServerError, err.Error()))
 	}
 
 	if exists := u.UserService.IsEmailExists(c.Context(), user.Email); exists {
-		return c.Status(400).JSON(global.NewBaseResponse(400, "Email already registered"))
+		return c.Status(fiber.StatusBadRequest).JSON(global.NewBaseResponse(fiber.StatusBadRequest, "Email already registered"))
 	}
 
 	if exists := u.UserService.IsUsernameExists(c.Context(), user.Username); exists {
-		return c.Status(400).JSON(global.NewBaseResponse(400, "Username already registered"))
+		return c.Status(fiber.StatusBadRequest).JSON(global.NewBaseResponse(fiber.StatusBadRequest, "Username already registered"))
 	}
 
 	err := u.UserService.CreateUser(c.Context(), user)
 	if err != nil {
-		return c.Status(500).JSON(global.NewBaseResponse(500, err.Error()))
+		return c.Status(fiber.StatusInternalServerError).JSON(global.NewBaseResponse(fiber.StatusInternalServerError, err.Error()))
 	}
-	return c.Status(201).JSON(global.NewBaseResponse(201, "User created successfully"))
+	return c.Status(fiber.StatusCreated).JSON(global.NewBaseResponse(fiber.StatusCreated, "User created successfully"))
 }
 
 func (u *UserController) AuthenticateUser(c *fiber.Ctx) error {
 	var user dto.LoginRequest
 	if err := c.BodyParser(&user); err != nil {
-		return c.Status(500).JSON(global.NewBaseResponse(500, err.Error()))
+		return c.Status(fiber.StatusInternalServerError).JSON(global.NewBaseResponse(fiber.StatusInternalServerError, err.Error()))
 	}
 
 	token, err := u.UserService.AuthenticateUser(c.Context(), user)
 	if err != nil {
-		return c.Status(500).JSON(global.NewBaseResponse(500, err.Error()))
+		return c.Status(fiber.StatusInternalServerError).JSON(global.NewBaseResponse(fiber.StatusInternalServerError, err.Error()))
 	}
 
 	if token == nil {
-		return c.Status(401).JSON(global.NewBaseResponse(401, "Invalid credentials"))
+		return c.Status(fiber.StatusUnauthorized).JSON(global.NewBaseResponse(fiber.StatusUnauthorized, "Invalid credentials"))
 	}
 
-	return c.Status(200).JSON(global.NewBaseResponse(200, *token))
+	return c.Status(fiber.StatusOK).JSON(global.NewBaseResponse(fiber.StatusOK, *token))
 }

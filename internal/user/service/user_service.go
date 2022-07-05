@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/google/uuid"
 	"github.com/suryaadi44/linkify/internal/constant"
 	linkRepositoryPkg "github.com/suryaadi44/linkify/internal/link/repository"
 	"github.com/suryaadi44/linkify/internal/user/dto"
@@ -36,7 +35,6 @@ func (u UserService) CreateUser(ctx context.Context, user dto.RegisterRequest) e
 	}
 
 	userEntity := entity.User{
-		UID:      uuid.NewString(),
 		Username: user.Username,
 		Email:    user.Email,
 		Password: hash,
@@ -81,7 +79,7 @@ func (u UserService) AuthenticateUser(ctx context.Context, user dto.LoginRequest
 
 	//Create jwt claims
 	claims := jwt.MapClaims{
-		"uid":        savedUser.UID,
+		"username":   savedUser.Username,
 		"permission": savedUser.Rank,
 		"exp":        time.Now().Add(time.Hour * 2).Unix(),
 	}

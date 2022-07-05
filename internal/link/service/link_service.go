@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"log"
 
 	"github.com/suryaadi44/linkify/internal/link/dto"
@@ -13,6 +14,8 @@ type LinkService struct {
 	linkRepository linkRepository.LinkRepository
 	userService    userService.UserService
 }
+
+var ErrLinkExists = errors.New("Link already exists")
 
 func NewLinkService(linkRepository linkRepository.LinkRepository, userService userService.UserService) *LinkService {
 	return &LinkService{
@@ -35,4 +38,21 @@ func (l LinkService) GetLink(ctx context.Context, username string) (*dto.LinksRe
 	}
 
 	return dto.NewLinksResponse(*links, picture), nil
+}
+
+func (l LinkService) AddLink(ctx context.Context, username string, link dto.Link) error {
+	// Check duplicate link title
+	if l.linkRepository.IsLinkExists(ctx, username, link.Title) {
+		return ErrLinkExists
+	}
+
+	// Add link to document links field (array)
+	linkEntity := dto.NewLinkEntity(link)
+	err := l.linkRepository.AddLink(ctx, username, *linkEntity)
+	if err != nil {
+		log.Println("[Link] Error adding link: ", err)
+		return err
+	}
+
+	return nil
 }

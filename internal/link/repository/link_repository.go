@@ -44,3 +44,28 @@ func (l *LinkRepository) CreateDefaultLink(ctx context.Context, username string)
 
 	return nil
 }
+
+func (l *LinkRepository) AddLink(ctx context.Context, username string, link entity.Link) error {
+	collection := l.db.Collection("links")
+
+	// add link to document links field (array)
+	_, err := collection.UpdateOne(ctx, bson.M{"_id": username}, bson.M{"$push": bson.M{"links": link}})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (l *LinkRepository) IsLinkExists(ctx context.Context, username string, linkTitle string) bool {
+	collection := l.db.Collection("links")
+
+	// check if link exists in document links field (array)
+	var links entity.Links
+	err := collection.FindOne(ctx, bson.M{"_id": username, "links.title": linkTitle}).Decode(&links)
+	if err != nil {
+		return false
+	}
+
+	return true
+}
