@@ -7,21 +7,23 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/google/uuid"
 	"github.com/suryaadi44/linkify/internal/constant"
+	linkRepositoryPkg "github.com/suryaadi44/linkify/internal/link/repository"
 	"github.com/suryaadi44/linkify/internal/user/dto"
 	entity "github.com/suryaadi44/linkify/internal/user/entitiy"
-	"github.com/suryaadi44/linkify/internal/user/repository"
+	userRepositoryPkg "github.com/suryaadi44/linkify/internal/user/repository"
 	"github.com/suryaadi44/linkify/pkg/utils"
 )
 
 type UserService struct {
-	repository repository.UserRepository
+	userRepository userRepositoryPkg.UserRepository
+	linkRepository linkRepositoryPkg.LinkRepository
 }
 
-func NewUserService(repository repository.UserRepository) *UserService {
+func NewUserService(repository userRepositoryPkg.UserRepository, linkRepository linkRepositoryPkg.LinkRepository) *UserService {
 	return &UserService{
-		repository: repository,
+		userRepository: repository,
+		linkRepository: linkRepository,
 	}
 }
 
@@ -33,7 +35,6 @@ func (u UserService) CreateUser(ctx context.Context, user dto.RegisterRequest) e
 	}
 
 	userEntity := entity.User{
-		UID:      uuid.NewString(),
 		Username: user.Username,
 		Email:    user.Email,
 		Password: hash,
@@ -42,9 +43,15 @@ func (u UserService) CreateUser(ctx context.Context, user dto.RegisterRequest) e
 		Created:  time.Now(),
 	}
 
-	err = u.repository.CreateUser(ctx, userEntity)
+	err = u.userRepository.CreateUser(ctx, userEntity)
 	if err != nil {
 		log.Println("[User] Error creating user :", err)
+		return err
+	}
+
+	err = u.linkRepository.CreateDefaultLink(ctx, user.Username)
+	if err != nil {
+		log.Println("[User] Error creating default link :", err)
 		return err
 	}
 
@@ -52,15 +59,15 @@ func (u UserService) CreateUser(ctx context.Context, user dto.RegisterRequest) e
 }
 
 func (u UserService) IsEmailExists(ctx context.Context, email string) bool {
-	return u.repository.IsEmailExists(ctx, email)
+	return u.userRepository.IsEmailExists(ctx, email)
 }
 
 func (u UserService) IsUsernameExists(ctx context.Context, username string) bool {
-	return u.repository.IsUsernameExists(ctx, username)
+	return u.userRepository.IsUsernameExists(ctx, username)
 }
 
 func (u UserService) AuthenticateUser(ctx context.Context, user dto.LoginRequest) (*string, error) {
-	savedUser, err := u.repository.GetUserByEmail(ctx, user.Email)
+	savedUser, err := u.userRepository.GetUserByEmail(ctx, user.Email)
 	if err != nil {
 		log.Println("[User] Error getting user :", err)
 		return nil, err
@@ -72,7 +79,7 @@ func (u UserService) AuthenticateUser(ctx context.Context, user dto.LoginRequest
 
 	//Create jwt claims
 	claims := jwt.MapClaims{
-		"uid":        savedUser.UID,
+		"username":   savedUser.Username,
 		"permission": savedUser.Rank,
 		"exp":        time.Now().Add(time.Hour * 2).Unix(),
 	}
@@ -91,7 +98,7 @@ func (u UserService) AuthenticateUser(ctx context.Context, user dto.LoginRequest
 }
 
 func (u UserService) GetUserPictureByUsername(ctx context.Context, username string) (string, error) {
-	picture, err := u.repository.GetUserPictureByUsername(ctx, username)
+	picture, err := u.userRepository.GetUserPictureByUsername(ctx, username)
 	if err != nil {
 		log.Println("[User] Error getting user picture :", err)
 		return "", err

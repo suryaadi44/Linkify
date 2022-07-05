@@ -32,7 +32,7 @@ func InitializeController(app *fiber.App, db *mongo.Database) {
 	userRepository := userRepositoryPkg.NewUserRepository(db)
 	linkRepository := linkRepositoryPkg.NewLinkRepository(db)
 
-	userService := userServicePkg.NewUserService(*userRepository)
+	userService := userServicePkg.NewUserService(*userRepository, *linkRepository)
 	linkService := linkServicePkg.NewLinkService(*linkRepository, *userService)
 
 	userController := userControllerPkg.NewUserController(api, *userService)

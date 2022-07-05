@@ -44,7 +44,7 @@ func (u *UserRepository) IsUsernameExists(ctx context.Context, username string) 
 	collection := u.db.Collection("users")
 
 	var user entity.User
-	err := collection.FindOne(ctx, bson.M{"username": username}).Decode(&user)
+	err := collection.FindOne(ctx, bson.M{"_id": username}).Decode(&user)
 	if err != nil {
 		return false
 	}
@@ -68,7 +68,7 @@ func (u *UserRepository) GetUserPictureByUsername(ctx context.Context, username 
 	collection := u.db.Collection("users")
 
 	var user entity.User
-	err := collection.FindOne(ctx, bson.M{"username": username}).Decode(&user)
+	err := collection.FindOne(ctx, bson.M{"_id": username}).Decode(&user)
 	if err != nil {
 		return user.Picture, err
 	}
