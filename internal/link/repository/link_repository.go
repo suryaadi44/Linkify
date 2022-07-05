@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/suryaadi44/linkify/internal/link/entity"
 	"go.mongodb.org/mongo-driver/bson"
@@ -64,11 +63,10 @@ func (l *LinkRepository) EditLinkById(ctx context.Context, username string, link
 	collection := l.db.Collection("links")
 
 	// edit link in document links field with specified id
-	debug, err := collection.UpdateOne(ctx, bson.M{"_id": username, "links.id": link.ID}, bson.M{"$set": bson.M{"links.$": link}})
+	_, err := collection.UpdateOne(ctx, bson.M{"_id": username, "links.id": link.ID}, bson.M{"$set": bson.M{"links.$": link}})
 	if err != nil {
 		return err
 	}
-	fmt.Println(debug)
 
 	return nil
 }
