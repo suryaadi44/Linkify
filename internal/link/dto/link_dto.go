@@ -10,6 +10,7 @@ type LinksResponse struct {
 }
 
 type Link struct {
+	ID        int    `json:"id"`
 	Title     string `json:"title"`
 	URL       string `json:"url"`
 	Thumbnail string `json:"thumbnail,omitempty"`
@@ -17,8 +18,9 @@ type Link struct {
 
 func NewLinksResponse(links entity.Links, picture string) *LinksResponse {
 	var link []Link
-	for _, l := range links.Links {
+	for idx, l := range links.Links {
 		link = append(link, Link{
+			ID:        idx,
 			Title:     l.Title,
 			URL:       l.URL,
 			Thumbnail: l.Thumbnail,
