@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/suryaadi44/linkify/internal/link/entity"
 	"go.mongodb.org/mongo-driver/bson"
@@ -57,11 +58,51 @@ func (l *LinkRepository) AddLink(ctx context.Context, username string, link enti
 	return nil
 }
 
-func (l *LinkRepository) IsLinkExists(ctx context.Context, username string, linkTitle string) bool {
+func (l *LinkRepository) EditLinkByIndex(ctx context.Context, username string, index int, link entity.Link) error {
 	collection := l.db.Collection("links")
 
-	// check if link exists in document links field (array)
-	var links entity.Links
-	err := collection.FindOne(ctx, bson.M{"_id": username, "links.title": linkTitle}).Decode(&links)
-	return err == nil
+	// edit link in document links field at specified index
+	_, err := collection.UpdateOne(ctx, bson.M{"_id": username}, bson.M{"$set": bson.M{fmt.Sprintf("links.%d", index): link}})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (l *LinkRepository) IsLinkIndexExist(ctx context.Context, username string, index int) bool {
+	collection := l.db.Collection("links")
+
+	// Agregate links with projection to check if index exist
+	matchStage := bson.D{
+		{"$match", bson.D{
+			{"_id", username},
+		}},
+	}
+
+	projectionStage := bson.D{
+		{"$project", bson.D{
+			{"links", bson.D{
+				{"$arrayElemAt", bson.A{"$links", index}},
+			}},
+		}},
+	}
+
+	indexCursor, err := collection.Aggregate(ctx, mongo.Pipeline{matchStage, projectionStage})
+	if err != nil {
+		return false
+	}
+
+	// decode cursor to check if index exist
+	var result []bson.M
+	err = indexCursor.All(ctx, &result)
+	if err != nil {
+		return false
+	}
+
+	if _, ok := result[0]["links"]; !ok {
+		return false
+	}
+
+	return true
 }

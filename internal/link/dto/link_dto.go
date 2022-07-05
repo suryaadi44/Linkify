@@ -10,7 +10,7 @@ type LinksResponse struct {
 }
 
 type Link struct {
-	ID        int    `json:"id"`
+	ID        int    `json:"id,omitempty"`
 	Title     string `json:"title"`
 	URL       string `json:"url"`
 	Thumbnail string `json:"thumbnail,omitempty"`

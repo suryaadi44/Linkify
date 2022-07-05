@@ -15,7 +15,10 @@ type LinkService struct {
 	userService    userService.UserService
 }
 
-var ErrLinkExists = errors.New("Link already exists")
+var (
+	ErrLinkExists   = errors.New("Link already exists")
+	ErrLinkNotFound = errors.New("Link not found")
+)
 
 func NewLinkService(linkRepository linkRepository.LinkRepository, userService userService.UserService) *LinkService {
 	return &LinkService{
@@ -41,16 +44,28 @@ func (l LinkService) GetLink(ctx context.Context, username string) (*dto.LinksRe
 }
 
 func (l LinkService) AddLink(ctx context.Context, username string, link dto.Link) error {
-	// Check duplicate link title
-	if l.linkRepository.IsLinkExists(ctx, username, link.Title) {
-		return ErrLinkExists
-	}
-
 	// Add link to document links field (array)
 	linkEntity := dto.NewLinkEntity(link)
 	err := l.linkRepository.AddLink(ctx, username, *linkEntity)
 	if err != nil {
 		log.Println("[Link] Error adding link: ", err)
+		return err
+	}
+
+	return nil
+}
+
+func (l LinkService) EditLinkByIndex(ctx context.Context, username string, link dto.Link) error {
+	//Check if link exist
+	if !l.linkRepository.IsLinkIndexExist(ctx, username, link.ID) {
+		return ErrLinkNotFound
+	}
+
+	// Edit link in document links field (array)
+	linkEntity := dto.NewLinkEntity(link)
+	err := l.linkRepository.EditLinkByIndex(ctx, username, link.ID, *linkEntity)
+	if err != nil {
+		log.Println("[Link] Error editing link: ", err)
 		return err
 	}
 
