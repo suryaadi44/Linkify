@@ -21,7 +21,7 @@ func NewUserController(Router fiber.Router, userService service.UserService) *Us
 }
 
 func (u *UserController) InitializeController() {
-	u.Router.Post("/user/register", u.RegisterUser)
+	u.Router.Post("/user/signup", u.RegisterUser)
 	u.Router.Post("/user/login", u.AuthenticateUser)
 }
 

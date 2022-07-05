@@ -29,3 +29,18 @@ func (l *LinkRepository) GetLinkByUsername(ctx context.Context, username string)
 
 	return &links, err
 }
+
+func (l *LinkRepository) CreateDefaultLink(ctx context.Context, username string) error {
+	collection := l.db.Collection("links")
+
+	_, err := collection.InsertOne(ctx, entity.Links{
+		Username:    username,
+		Description: "",
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
