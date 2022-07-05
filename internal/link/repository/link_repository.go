@@ -22,7 +22,7 @@ func (l *LinkRepository) GetLinkByUsername(ctx context.Context, username string)
 	collection := l.db.Collection("links")
 
 	var links entity.Links
-	err := collection.FindOne(ctx, bson.M{"username": username}).Decode(&links)
+	err := collection.FindOne(ctx, bson.M{"_id": username}).Decode(&links)
 	if err != nil {
 		return nil, err
 	}
