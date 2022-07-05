@@ -8,6 +8,7 @@ import (
 	"github.com/suryaadi44/linkify/internal/link/dto"
 	linkRepository "github.com/suryaadi44/linkify/internal/link/repository"
 	userService "github.com/suryaadi44/linkify/internal/user/service"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type LinkService struct {
@@ -55,17 +56,48 @@ func (l LinkService) AddLink(ctx context.Context, username string, link dto.Link
 	return nil
 }
 
-func (l LinkService) EditLinkByIndex(ctx context.Context, username string, link dto.Link) error {
+func (l LinkService) EditLinkById(ctx context.Context, username string, link dto.Link) error {
+	//convert id string to object id
+	id, err := primitive.ObjectIDFromHex(link.ID)
+	if err != nil {
+		log.Println("[Link] Error converting id string to object id: ", err)
+		return err
+	}
+
 	//Check if link exist
-	if !l.linkRepository.IsLinkIndexExist(ctx, username, link.ID) {
+	if !l.linkRepository.IsLinkIdExist(ctx, username, id) {
 		return ErrLinkNotFound
 	}
 
 	// Edit link in document links field (array)
 	linkEntity := dto.NewLinkEntity(link)
-	err := l.linkRepository.EditLinkByIndex(ctx, username, link.ID, *linkEntity)
+	linkEntity.ID = id
+	err = l.linkRepository.EditLinkById(ctx, username, *linkEntity)
 	if err != nil {
 		log.Println("[Link] Error editing link: ", err)
+		return err
+	}
+
+	return nil
+}
+
+func (l LinkService) DeleteLinkById(ctx context.Context, username string, idString string) error {
+	//convert id string to object id
+	id, err := primitive.ObjectIDFromHex(idString)
+	if err != nil {
+		log.Println("[Link] Error converting id string to object id: ", err)
+		return err
+	}
+
+	//Check if link exist
+	if !l.linkRepository.IsLinkIdExist(ctx, username, id) {
+		return ErrLinkNotFound
+	}
+
+	// Delete link from document links field (array)
+	err = l.linkRepository.DeleteLinkById(ctx, username, id)
+	if err != nil {
+		log.Println("[Link] Error deleting link: ", err)
 		return err
 	}
 

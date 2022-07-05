@@ -37,7 +37,8 @@ func (l *LinkController) InitializeController() {
 	}))
 
 	l.Router.Put("/link", l.AddLink)
-	l.Router.Patch("/link", l.EditLinkByIndex)
+	l.Router.Patch("/link", l.EditLinkById)
+	l.Router.Delete("/link", l.DeleteLinkById)
 }
 
 func (l *LinkController) GetLink(c *fiber.Ctx) error {
@@ -72,7 +73,7 @@ func (l *LinkController) AddLink(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(global.NewBaseResponse(fiber.StatusCreated, "Link added successfully"))
 }
 
-func (l *LinkController) EditLinkByIndex(c *fiber.Ctx) error {
+func (l *LinkController) EditLinkById(c *fiber.Ctx) error {
 	var link dto.Link
 	if err := c.BodyParser(&link); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(global.NewBaseResponse(fiber.StatusInternalServerError, err.Error()))
@@ -82,7 +83,7 @@ func (l *LinkController) EditLinkByIndex(c *fiber.Ctx) error {
 	claims := user.Claims.(jwt.MapClaims)
 	username := claims["username"].(string)
 
-	err := l.LinkService.EditLinkByIndex(c.Context(), username, link)
+	err := l.LinkService.EditLinkById(c.Context(), username, link)
 	if err != nil {
 		if err == service.ErrLinkNotFound {
 			return c.Status(fiber.StatusNotFound).JSON(global.NewBaseResponse(fiber.StatusNotFound, err.Error()))
@@ -96,4 +97,26 @@ func (l *LinkController) EditLinkByIndex(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(global.NewBaseResponse(fiber.StatusOK, "Link edited successfully"))
+}
+
+func (l *LinkController) DeleteLinkById(c *fiber.Ctx) error {
+	var link dto.Link
+	if err := c.BodyParser(&link); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(global.NewBaseResponse(fiber.StatusInternalServerError, err.Error()))
+	}
+
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	username := claims["username"].(string)
+
+	err := l.LinkService.DeleteLinkById(c.Context(), username, link.ID)
+	if err != nil {
+		if err == service.ErrLinkNotFound {
+			return c.Status(fiber.StatusNotFound).JSON(global.NewBaseResponse(fiber.StatusNotFound, err.Error()))
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(global.NewBaseResponse(fiber.StatusInternalServerError, err.Error()))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(global.NewBaseResponse(fiber.StatusOK, "Link deleted successfully"))
 }
