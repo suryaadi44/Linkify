@@ -4,6 +4,7 @@ import (
 	"context"
 
 	entity "github.com/suryaadi44/linkify/internal/user/entitiy"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -31,7 +32,7 @@ func (u *UserRepository) IsEmailExists(ctx context.Context, email string) bool {
 	collection := u.db.Collection("users")
 
 	var user entity.User
-	err := collection.FindOne(ctx, map[string]interface{}{"email": email}).Decode(&user)
+	err := collection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
 	if err != nil {
 		return false
 	}
@@ -43,7 +44,7 @@ func (u *UserRepository) IsUsernameExists(ctx context.Context, username string) 
 	collection := u.db.Collection("users")
 
 	var user entity.User
-	err := collection.FindOne(ctx, map[string]interface{}{"username": username}).Decode(&user)
+	err := collection.FindOne(ctx, bson.M{"username": username}).Decode(&user)
 	if err != nil {
 		return false
 	}
@@ -55,10 +56,22 @@ func (u *UserRepository) GetUserByEmail(ctx context.Context, email string) (enti
 	collection := u.db.Collection("users")
 
 	var user entity.User
-	err := collection.FindOne(ctx, map[string]interface{}{"email": email}).Decode(&user)
+	err := collection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
 	if err != nil {
 		return user, err
 	}
 
 	return user, nil
+}
+
+func (u *UserRepository) GetUserPictureByUsername(ctx context.Context, username string) (string, error) {
+	collection := u.db.Collection("users")
+
+	var user entity.User
+	err := collection.FindOne(ctx, bson.M{"username": username}).Decode(&user)
+	if err != nil {
+		return user.Picture, err
+	}
+
+	return user.Picture, nil
 }

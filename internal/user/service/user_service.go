@@ -8,6 +8,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
+	"github.com/suryaadi44/linkify/internal/constant"
 	"github.com/suryaadi44/linkify/internal/user/dto"
 	entity "github.com/suryaadi44/linkify/internal/user/entitiy"
 	"github.com/suryaadi44/linkify/internal/user/repository"
@@ -27,6 +28,7 @@ func NewUserService(repository repository.UserRepository) *UserService {
 func (u UserService) CreateUser(ctx context.Context, user dto.RegisterRequest) error {
 	hash, err := utils.HashPassword(user.Password)
 	if err != nil {
+		log.Println("[User] Error hashing password :", err)
 		return err
 	}
 
@@ -35,6 +37,7 @@ func (u UserService) CreateUser(ctx context.Context, user dto.RegisterRequest) e
 		Username: user.Username,
 		Email:    user.Email,
 		Password: hash,
+		Picture:  constant.PICTURE_DEFAULT,
 		Rank:     0,
 		Created:  time.Now(),
 	}
@@ -59,6 +62,7 @@ func (u UserService) IsUsernameExists(ctx context.Context, username string) bool
 func (u UserService) AuthenticateUser(ctx context.Context, user dto.LoginRequest) (*string, error) {
 	savedUser, err := u.repository.GetUserByEmail(ctx, user.Email)
 	if err != nil {
+		log.Println("[User] Error getting user :", err)
 		return nil, err
 	}
 
@@ -79,8 +83,19 @@ func (u UserService) AuthenticateUser(ctx context.Context, user dto.LoginRequest
 	//Sign token
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
+		log.Println("[User] Error signing token :", err)
 		return nil, err
 	}
 
 	return &tokenString, nil
+}
+
+func (u UserService) GetUserPictureByUsername(ctx context.Context, username string) (string, error) {
+	picture, err := u.repository.GetUserPictureByUsername(ctx, username)
+	if err != nil {
+		log.Println("[User] Error getting user picture :", err)
+		return "", err
+	}
+
+	return picture, nil
 }
