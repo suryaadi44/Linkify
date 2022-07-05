@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"log"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -55,7 +56,7 @@ func (u UserService) IsUsernameExists(ctx context.Context, username string) bool
 	return u.repository.IsUsernameExists(ctx, username)
 }
 
-func (u UserService) AuthenticateUser(ctx context.Context, user dto.LoginRequest) (*jwt.Token, error) {
+func (u UserService) AuthenticateUser(ctx context.Context, user dto.LoginRequest) (*string, error) {
 	savedUser, err := u.repository.GetUserByEmail(ctx, user.Email)
 	if err != nil {
 		return nil, err
@@ -75,5 +76,11 @@ func (u UserService) AuthenticateUser(ctx context.Context, user dto.LoginRequest
 	//Create token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return token, nil
+	//Sign token
+	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	if err != nil {
+		return nil, err
+	}
+
+	return &tokenString, nil
 }

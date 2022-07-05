@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"os"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/suryaadi44/linkify/internal/user/dto"
 	"github.com/suryaadi44/linkify/internal/user/service"
@@ -63,11 +61,5 @@ func (u *UserController) AuthenticateUser(c *fiber.Ctx) error {
 		return c.Status(401).JSON(global.NewBaseResponse(401, "Invalid credentials"))
 	}
 
-	//Sign token
-	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
-	if err != nil {
-		return c.Status(500).JSON(global.NewBaseResponse(500, err.Error()))
-	}
-
-	return c.Status(200).JSON(global.NewBaseResponse(200, tokenString))
+	return c.Status(200).JSON(global.NewBaseResponse(200, *token))
 }
