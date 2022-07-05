@@ -63,9 +63,5 @@ func (l *LinkRepository) IsLinkExists(ctx context.Context, username string, link
 	// check if link exists in document links field (array)
 	var links entity.Links
 	err := collection.FindOne(ctx, bson.M{"_id": username, "links.title": linkTitle}).Decode(&links)
-	if err != nil {
-		return false
-	}
-
-	return true
+	return err == nil
 }
