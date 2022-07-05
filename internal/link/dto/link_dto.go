@@ -1,6 +1,8 @@
 package dto
 
-import "github.com/suryaadi44/linkify/internal/link/entity"
+import (
+	"github.com/suryaadi44/linkify/internal/link/entity"
+)
 
 type LinksResponse struct {
 	Username    string `json:"username"`
@@ -10,17 +12,17 @@ type LinksResponse struct {
 }
 
 type Link struct {
-	ID        int    `json:"id,omitempty"`
-	Title     string `json:"title"`
-	URL       string `json:"url"`
+	ID        string `json:"id,omitempty"`
+	Title     string `json:"title,omitempty"`
+	URL       string `json:"url,omitempty"`
 	Thumbnail string `json:"thumbnail,omitempty"`
 }
 
 func NewLinksResponse(links entity.Links, picture string) *LinksResponse {
 	var link []Link
-	for idx, l := range links.Links {
+	for _, l := range links.Links {
 		link = append(link, Link{
-			ID:        idx,
+			ID:        l.ID.Hex(),
 			Title:     l.Title,
 			URL:       l.URL,
 			Thumbnail: l.Thumbnail,

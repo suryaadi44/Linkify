@@ -6,6 +6,7 @@ import (
 
 	"github.com/suryaadi44/linkify/internal/link/entity"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -50,6 +51,7 @@ func (l *LinkRepository) AddLink(ctx context.Context, username string, link enti
 	collection := l.db.Collection("links")
 
 	// add link to document links field (array)
+	link.ID = primitive.NewObjectID()
 	_, err := collection.UpdateOne(ctx, bson.M{"_id": username}, bson.M{"$push": bson.M{"links": link}})
 	if err != nil {
 		return err
@@ -58,51 +60,39 @@ func (l *LinkRepository) AddLink(ctx context.Context, username string, link enti
 	return nil
 }
 
-func (l *LinkRepository) EditLinkByIndex(ctx context.Context, username string, index int, link entity.Link) error {
+func (l *LinkRepository) EditLinkById(ctx context.Context, username string, link entity.Link) error {
 	collection := l.db.Collection("links")
 
-	// edit link in document links field at specified index
-	_, err := collection.UpdateOne(ctx, bson.M{"_id": username}, bson.M{"$set": bson.M{fmt.Sprintf("links.%d", index): link}})
+	// edit link in document links field with specified id
+	debug, err := collection.UpdateOne(ctx, bson.M{"_id": username, "links.id": link.ID}, bson.M{"$set": bson.M{"links.$": link}})
+	if err != nil {
+		return err
+	}
+	fmt.Println(debug)
+
+	return nil
+}
+
+func (l *LinkRepository) IsLinkIdExist(ctx context.Context, username string, id primitive.ObjectID) bool {
+	collection := l.db.Collection("links")
+
+	// check if _id exist in document links field (array)
+	count, err := collection.CountDocuments(ctx, bson.M{"_id": username, "links.id": id})
+	if err != nil {
+		return false
+	}
+
+	return count > 0
+}
+
+func (l *LinkRepository) DeleteLinkById(ctx context.Context, username string, id primitive.ObjectID) error {
+	collection := l.db.Collection("links")
+
+	//delete link with specified id from document links field (array)
+	_, err := collection.UpdateOne(ctx, bson.M{"_id": username}, bson.M{"$pull": bson.M{"links": bson.M{"id": id}}})
 	if err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func (l *LinkRepository) IsLinkIndexExist(ctx context.Context, username string, index int) bool {
-	collection := l.db.Collection("links")
-
-	// Agregate links with projection to check if index exist
-	matchStage := bson.D{
-		{"$match", bson.D{
-			{"_id", username},
-		}},
-	}
-
-	projectionStage := bson.D{
-		{"$project", bson.D{
-			{"links", bson.D{
-				{"$arrayElemAt", bson.A{"$links", index}},
-			}},
-		}},
-	}
-
-	indexCursor, err := collection.Aggregate(ctx, mongo.Pipeline{matchStage, projectionStage})
-	if err != nil {
-		return false
-	}
-
-	// decode cursor to check if index exist
-	var result []bson.M
-	err = indexCursor.All(ctx, &result)
-	if err != nil {
-		return false
-	}
-
-	if _, ok := result[0]["links"]; !ok {
-		return false
-	}
-
-	return true
 }
